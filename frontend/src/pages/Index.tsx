@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import MainLayout from "@/components/layout/MainLayout";
@@ -9,18 +8,18 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    // Simulate checking for existing session
     const checkAuth = () => {
       const storedAuth = localStorage.getItem('docmate_auth');
       if (storedAuth) {
         setIsAuthenticated(true);
-      } else {
-        // Show auth modal after a brief delay for better UX
-        setTimeout(() => setShowAuthModal(true), 1000);
       }
     };
     checkAuth();
   }, []);
+
+  const handleGetStarted = () => {
+    setShowAuthModal(true);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -47,42 +46,48 @@ const Index = () => {
         </div>
 
         {/* Security Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-85 flex items-center justify-center">
-          <div className="text-center">
-            {/* Animated Lock Icon */}
-            <div className="relative mb-8">
-              <div className="w-20 h-20 mx-auto relative">
-                <svg 
-                  className="w-20 h-20 text-cyan-400 animate-pulse" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={1.5} 
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                <div className="absolute inset-0 w-20 h-20 bg-cyan-400 opacity-20 rounded-full animate-ping"></div>
-              </div>
+        <div className="absolute inset-0 bg-black bg-opacity-85 flex flex-col items-center justify-center text-center px-4">
+          {/* Lock Icon */}
+          <div className="relative mb-8">
+            <div className="w-20 h-20 mx-auto relative">
+              <svg 
+                className="w-20 h-20 text-cyan-400 animate-pulse" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={1.5} 
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+              <div className="absolute inset-0 w-20 h-20 bg-cyan-400 opacity-20 rounded-full animate-ping"></div>
             </div>
-
-            {/* Security Message */}
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Secure Medical Portal
-            </h1>
-            <p className="text-xl text-gray-300 mb-2">
-              Authentication Required
-            </p>
-            <p className="text-sm text-gray-400 mb-8">
-              HIPAA Compliant • End-to-End Encrypted • Medical Professional Access Only
-            </p>
           </div>
+
+          {/* Message */}
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Secure Medical Portal
+          </h1>
+          <p className="text-xl text-gray-300 mb-2">
+            Authentication Required
+          </p>
+          <p className="text-sm text-gray-400 mb-6">
+            HIPAA Compliant • End-to-End Encrypted • Medical Professional Access Only
+          </p>
+
+          {/* Get Started Button */}
+          <button
+            onClick={handleGetStarted}
+            className="px-6 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-700 text-white font-semibold text-lg transition-all duration-200"
+          >
+            Get Started
+          </button>
         </div>
 
-        {/* Authentication Modal */}
+        {/* Auth Modal */}
         <AuthModal 
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
