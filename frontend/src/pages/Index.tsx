@@ -1,25 +1,16 @@
 // pages/index.tsx
-import { useState, useEffect } from "react";
+import { useUser, useSignIn } from "@clerk/clerk-react";
 import AuthModal from "@/components/auth/AuthModal";
 import MainLayout from "@/components/layout/MainLayout";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
-import Header from "@/components/layout/Header";
+import { useState } from "react";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isSignedIn } = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  useEffect(() => {
-    const storedAuth = localStorage.getItem("docmate_auth");
-    if (storedAuth) {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("docmate_auth");
-    setIsAuthenticated(false);
-    setShowAuthModal(true);
+  const handleLogout = async () => {
+    window.location.href = "/sign-out"; // Clerk handles logout routing
   };
 
   const handleGetStarted = () => {
@@ -28,7 +19,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative">
-      {!isAuthenticated ? (
+      {!isSignedIn ? (
         <>
           {/* Blurred Dashboard Preview */}
           <div
@@ -95,13 +86,12 @@ const Index = () => {
             </button>
           </div>
 
-          {/* Auth Modal */}
+          {/* Auth Modal (optional for custom UI, otherwise Clerk handles auth redirect) */}
           <AuthModal
             isOpen={showAuthModal}
             onClose={() => setShowAuthModal(false)}
             onAuthenticate={() => {
-              localStorage.setItem("docmate_auth", "true");
-              setIsAuthenticated(true);
+              // Clerk will automatically handle session state.
               setShowAuthModal(false);
             }}
           />

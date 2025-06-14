@@ -1,5 +1,5 @@
-// components/layout/Header.tsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useClerk } from "@clerk/clerk-react";
 
 interface HeaderProps {
   onLogout: () => void;
@@ -15,6 +16,8 @@ interface HeaderProps {
 const Header = ({ onLogout }: HeaderProps) => {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
+  const navigate = useNavigate();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     const updateTimeAndDate = () => {
@@ -45,9 +48,15 @@ const Header = ({ onLogout }: HeaderProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogoutClick = () => {
-    localStorage.removeItem("docmate_auth");
-    onLogout();
+  const handleLogoutClick = async () => {
+    try {
+      localStorage.removeItem("docmate_auth");
+      await signOut();
+      onLogout();
+      navigate("/login");
+    } catch (err) {
+      console.error("❌ Logout failed:", err);
+    }
   };
 
   return (
