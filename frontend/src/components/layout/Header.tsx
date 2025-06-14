@@ -1,3 +1,4 @@
+// components/layout/Header.tsx
 import { useState, useEffect } from "react";
 import {
   DropdownMenu,
@@ -7,7 +8,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-const Header = () => {
+interface HeaderProps {
+  onLogout: () => void;
+}
+
+const Header = ({ onLogout }: HeaderProps) => {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
 
@@ -15,13 +20,12 @@ const Header = () => {
     const updateTimeAndDate = () => {
       const now = new Date();
 
-      // Use Intl.DateTimeFormat to get accurate IST time
       const timeFormatter = new Intl.DateTimeFormat('en-IN', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: 'Asia/Kolkata'
+        timeZone: 'Asia/Kolkata',
       });
 
       const dateFormatter = new Intl.DateTimeFormat('en-IN', {
@@ -29,7 +33,7 @@ const Header = () => {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
-        timeZone: 'Asia/Kolkata'
+        timeZone: 'Asia/Kolkata',
       });
 
       setCurrentTime(timeFormatter.format(now));
@@ -38,19 +42,17 @@ const Header = () => {
 
     updateTimeAndDate();
     const interval = setInterval(updateTimeAndDate, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('docmate_auth');
-    window.location.reload();
+  const handleLogoutClick = () => {
+    localStorage.removeItem("docmate_auth");
+    onLogout();
   };
 
   return (
     <header className="h-16 border-b shadow-lg bg-gradient-to-r from-gray-800 to-gray-900 border-gray-600 backdrop-blur-lg">
       <div className="flex items-center justify-between h-full px-6">
-        {/* Logo & Branding */}
         <div className="flex flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-4">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
@@ -60,26 +62,21 @@ const Header = () => {
             </div>
             <h1 className="text-2xl font-bold text-white">DocMate</h1>
           </div>
-
           <div className="hidden md:flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <span className="text-sm text-gray-300">Online</span>
           </div>
-
           <div className="text-sm hidden md:block text-gray-400">
             Metro General Hospital • Cardiology
           </div>
         </div>
 
-        {/* User & System Section */}
         <div className="flex items-center space-x-4 sm:space-x-6">
-          {/* Real-time IST Clock & Date */}
           <div className="text-right hidden sm:block">
             <div className="text-white font-mono text-sm sm:text-base">{currentTime}</div>
             <div className="text-xs text-gray-400">{currentDate}</div>
           </div>
 
-          {/* Doctor Profile with Dropdown */}
           <div className="flex items-center space-x-3">
             <div className="text-right hidden md:block">
               <div className="text-white font-semibold">Dr. Sarah Chen</div>
@@ -104,7 +101,7 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-red-400 hover:text-red-300 hover:bg-gray-700"
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                 >
                   Logout
                 </DropdownMenuItem>
