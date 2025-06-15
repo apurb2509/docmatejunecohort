@@ -84,6 +84,10 @@ const Header = ({ onLogout }: HeaderProps) => {
     }
   };
 
+  const handleProfileSettingsClick = () => {
+    navigate("/settings");
+  };
+
   const initials = (displayName || "DocMate")
     .split(" ")
     .map((n) => n[0])
@@ -134,11 +138,11 @@ const Header = ({ onLogout }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
-                <DropdownMenuItem className="text-gray-300 hover:text-white hover:bg-gray-700">
+                <DropdownMenuItem
+                  className="text-gray-300 hover:text-white hover:bg-gray-700"
+                  onClick={handleProfileSettingsClick}
+                >
                   Profile Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-300 hover:text-white hover:bg-gray-700">
-                  Preferences
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-red-400 hover:text-red-300 hover:bg-gray-700"
