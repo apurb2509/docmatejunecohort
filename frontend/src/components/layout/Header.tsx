@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { useUserProfile } from "@/context/UserProfileContext";
+import docmateLogo from "@/components/logo/docmate_logo.png"; // ✅ Correct path
 
 interface HeaderProps {
   onLogout: () => void;
@@ -54,7 +55,6 @@ const Header = ({ onLogout }: HeaderProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Load localStorage profile
   useEffect(() => {
     if (user) {
       const userId = user.id;
@@ -99,21 +99,30 @@ const Header = ({ onLogout }: HeaderProps) => {
     <header className="h-16 border-b shadow-lg bg-gradient-to-r from-gray-800 to-gray-900 border-gray-600 backdrop-blur-lg">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex flex-col md:flex-row md:items-center space-y-1 md:space-y-0 md:space-x-4">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-white">DocMate</h1>
-          </div>
+        <div
+        className="flex items-center cursor-pointer"
+        onClick={() => navigate("/")} // ✅ Logo routes to home
+      >
+        <img
+          src={docmateLogo}
+          alt="DocMate Logo"
+          className="w-12 h-12 rounded-lg mr-3 shadow-lg object-cover"
+        />
+        <div className="flex flex-col leading-tight">
+          <h1 className="text-2xl font-bold text-white">DocMate</h1>
+          <span className="text-[12px] text-gray-300 -mt-1">The Doctor's Ally</span>
+        </div>
+      </div>
+      
           <div className="hidden md:flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <span className="text-sm text-gray-300">Online</span>
           </div>
+
           <div className="text-sm hidden md:block text-gray-400">
-            Metro General Hospital • {displaySpecialization || "Cardiology"}
+          N6T Technologies
           </div>
+
         </div>
 
         <div className="flex items-center space-x-4 sm:space-x-6">
