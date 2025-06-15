@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useClerk } from "@clerk/clerk-react";
+import { useClerk, useUser } from "@clerk/clerk-react";
 
 interface HeaderProps {
   onLogout: () => void;
@@ -18,6 +18,7 @@ const Header = ({ onLogout }: HeaderProps) => {
   const [currentDate, setCurrentDate] = useState('');
   const navigate = useNavigate();
   const { signOut } = useClerk();
+  const { user } = useUser(); // Get current user
 
   useEffect(() => {
     const updateTimeAndDate = () => {
@@ -88,7 +89,9 @@ const Header = ({ onLogout }: HeaderProps) => {
 
           <div className="flex items-center space-x-3">
             <div className="text-right hidden md:block">
-              <div className="text-white font-semibold">Dr. Sarah Chen</div>
+              <div className="text-white font-semibold">
+                Dr. {user?.fullName || "Unknown"}
+              </div>
               <div className="text-xs text-gray-400">Cardiologist</div>
             </div>
 
@@ -98,7 +101,10 @@ const Header = ({ onLogout }: HeaderProps) => {
                   variant="ghost"
                   className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center hover:opacity-80 shadow-lg"
                 >
-                  <span className="text-white font-semibold">SC</span>
+                  <span className="text-white font-semibold">
+                    {user?.firstName?.[0] || "D"}
+                    {user?.lastName?.[0] || "C"}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
