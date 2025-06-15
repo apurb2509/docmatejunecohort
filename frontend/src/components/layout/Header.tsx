@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useClerk, useUser } from "@clerk/clerk-react";
+import { useUserProfile } from "@/context/UserProfileContext";
 
 interface HeaderProps {
   onLogout: () => void;
@@ -16,9 +17,13 @@ interface HeaderProps {
 const Header = ({ onLogout }: HeaderProps) => {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [displaySpecialization, setDisplaySpecialization] = useState('');
+
   const navigate = useNavigate();
   const { signOut } = useClerk();
-  const { user } = useUser(); // Get current user
+  const { user } = useUser();
+  const { profile } = useUserProfile();
 
   useEffect(() => {
     const updateTimeAndDate = () => {
@@ -49,6 +54,25 @@ const Header = ({ onLogout }: HeaderProps) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Load localStorage profile
+  useEffect(() => {
+    if (user) {
+      const userId = user.id;
+      const prefix = `user_${userId}`;
+      const isInitialized = localStorage.getItem(`${prefix}_initialized`);
+
+      if (isInitialized) {
+        const storedName = localStorage.getItem(`${prefix}_fullName`) || "";
+        const storedSpecialization = localStorage.getItem(`${prefix}_specialization`) || "";
+        setDisplayName(storedName);
+        setDisplaySpecialization(storedSpecialization);
+      } else {
+        setDisplayName(user.fullName || "Dr. Unknown");
+        setDisplaySpecialization(profile.specialization || "Cardiology");
+      }
+    }
+  }, [user, profile]);
+
   const handleLogoutClick = async () => {
     try {
       localStorage.removeItem("docmate_auth");
@@ -59,6 +83,13 @@ const Header = ({ onLogout }: HeaderProps) => {
       console.error("❌ Logout failed:", err);
     }
   };
+
+  const initials = (displayName || "DocMate")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
     <header className="h-16 border-b shadow-lg bg-gradient-to-r from-gray-800 to-gray-900 border-gray-600 backdrop-blur-lg">
@@ -77,7 +108,7 @@ const Header = ({ onLogout }: HeaderProps) => {
             <span className="text-sm text-gray-300">Online</span>
           </div>
           <div className="text-sm hidden md:block text-gray-400">
-            Metro General Hospital • Cardiology
+            Metro General Hospital • {displaySpecialization || "Cardiology"}
           </div>
         </div>
 
@@ -89,10 +120,8 @@ const Header = ({ onLogout }: HeaderProps) => {
 
           <div className="flex items-center space-x-3">
             <div className="text-right hidden md:block">
-              <div className="text-white font-semibold">
-                Dr. {user?.fullName || "Unknown"}
-              </div>
-              <div className="text-xs text-gray-400">Cardiologist</div>
+              <div className="text-white font-semibold">{displayName || "Dr. Unknown"}</div>
+              <div className="text-xs text-gray-400">{displaySpecialization || "Cardiologist"}</div>
             </div>
 
             <DropdownMenu>
@@ -101,10 +130,7 @@ const Header = ({ onLogout }: HeaderProps) => {
                   variant="ghost"
                   className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center hover:opacity-80 shadow-lg"
                 >
-                  <span className="text-white font-semibold">
-                    {user?.firstName?.[0] || "D"}
-                    {user?.lastName?.[0] || "C"}
-                  </span>
+                  <span className="text-white font-semibold">{initials}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">

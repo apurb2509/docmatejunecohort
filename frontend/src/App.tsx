@@ -14,6 +14,8 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+import { UserProfileProvider } from "@/context/UserProfileContext"; // ✅ Added
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL!,
   import.meta.env.VITE_SUPABASE_ANON_KEY!
@@ -119,7 +121,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppContent />
+        <UserProfileProvider> {/* ✅ Inject context here */}
+          <AppContent />
+        </UserProfileProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
