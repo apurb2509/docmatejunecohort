@@ -1,6 +1,7 @@
 For testing purpose, use these details for login: 
 username: apurb_2509
 password: brupa@apurb
+(other logins or sign-ups are prevented by us for security purposes)
 
 # 🏥 DocMate - The Doctor's Ally (AI-Powered Patient Management Dashboard/ Doctor's Portal)
 
