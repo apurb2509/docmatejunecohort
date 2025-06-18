@@ -1,17 +1,14 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Backend server for handling Clerk webhooks and syncing with Supabase",
-  "main": "index.js",
-  "type": "commonjs",
+  "description": "Backend server for DocMate",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.1.6",
     "@google/generative-ai": "^0.24.1",

@@ -44,15 +44,18 @@ const Prescriptions = () => {
 
   useEffect(() => {
     const fetchPrescriptions = async () => {
-      const { data, error } = await supabase
-        .from("prescriptions")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) {
-        console.error("Error fetching prescriptions:", error);
-      } else if (data) {
+      try {
+        const { data, error } = await supabase
+          .from("prescriptions")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
         setRecentPrescriptions(data as Prescription[]);
+      } catch (err) {
+        console.error("Error fetching prescriptions:", err);
+        setError("Failed to load recent prescriptions");
       }
     };
     fetchPrescriptions();
@@ -62,8 +65,14 @@ const Prescriptions = () => {
     setLoading(true);
     setError("");
     setAiResult("");
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gemini`, {
+      // Validate inputs
+      if (!symptoms.trim() || !history.trim()) {
+        throw new Error("Please enter both symptoms and medical history");
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/gemini`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,49 +80,40 @@ const Prescriptions = () => {
         }),
       });
 
-      const contentType = res.headers.get("content-type");
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
-      }
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        throw new Error("Invalid JSON response: " + text.slice(0, 100));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `API request failed with status ${response.status}`);
       }
 
-      const data = await res.json();
-      const result = data.result || "No result.";
+      const result = data.result || "No result generated";
       setAiResult(result);
 
-      const { error: dbError } = await supabase.from("prescriptions").insert([
-        {
-          title,
-          age,
-          gender,
-          patient_name: patientName,
-          symptoms,
-          history,
-          ai_result: result,
-        },
-      ]);
+      // Save to Supabase
+      const { error: dbError } = await supabase.from("prescriptions").insert([{
+        title,
+        age,
+        gender,
+        patient_name: patientName,
+        symptoms,
+        history,
+        ai_result: result,
+      }]);
 
-      if (dbError) {
-        console.error("Supabase insert error:", dbError);
-        setError("Failed to save to database: " + dbError.message);
-      } else {
-        // Refresh recent prescriptions on successful insert
-        const { data: newData, error: fetchError } = await supabase
-          .from("prescriptions")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(5);
-        if (!fetchError && newData) {
-          setRecentPrescriptions(newData as Prescription[]);
-        }
-      }
+      if (dbError) throw dbError;
+
+      // Refresh recent prescriptions
+      const { data: newData } = await supabase
+        .from("prescriptions")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (newData) setRecentPrescriptions(newData as Prescription[]);
+
     } catch (err: any) {
-      console.error("Error fetching AI response:", err);
-      setError(err.message || "Failed to generate prescription.");
-      setAiResult("");
+      console.error("Generation Error:", err);
+      setError(err.message || "Failed to generate prescription");
     } finally {
       setLoading(false);
     }
@@ -122,12 +122,15 @@ const Prescriptions = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Header Section */}
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 border border-cyan-400 border-opacity-20">
           <h1 className="text-3xl font-bold text-white mb-2">AI Prescriptions</h1>
           <p className="text-gray-300">
             Generate AI-powered prescriptions based on patient symptoms and medical history.
           </p>
         </div>
+
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input Section */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6 h-[600px] flex flex-col">
@@ -140,6 +143,7 @@ const Prescriptions = () => {
                   placeholder="Describe patient symptoms..."
                   value={symptoms}
                   onChange={(e) => setSymptoms(e.target.value)}
+                  disabled={loading}
                 />
               </div>
               <div className="flex-1 flex flex-col">
@@ -149,126 +153,124 @@ const Prescriptions = () => {
                   placeholder="Relevant medical history..."
                   value={history}
                   onChange={(e) => setHistory(e.target.value)}
+                  disabled={loading}
                 />
               </div>
               <button
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:opacity-90 w-full disabled:opacity-50"
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:opacity-90 w-full disabled:opacity-50 transition-opacity"
                 onClick={handleGenerate}
-                disabled={loading}
+                disabled={loading || !symptoms.trim() || !history.trim()}
               >
-                {loading ? "Generating..." : "Generate AI Prescription"}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating...
+                  </span>
+                ) : "Generate AI Prescription"}
               </button>
             </div>
           </div>
+
           {/* Output Section */}
           <div className="bg-gray-900 border border-cyan-700 rounded-xl p-6 h-[600px] overflow-y-auto">
             <h4 className="text-xl font-semibold text-white mb-3">AI Generated Prescription</h4>
-            {error && <p className="text-red-500 mb-2">{error}</p>}
-            {!aiResult && !loading && (
-              <p className="text-gray-400 text-sm">
-                This section will show the complete AI-generated prescription once generated.
-              </p>
+            
+            {error && (
+              <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-4">
+                <p className="text-red-300 font-medium">Error:</p>
+                <p className="text-red-100">{error}</p>
+              </div>
             )}
-            {loading && <p className="text-gray-300 animate-pulse">Generating...</p>}
+
+            {!aiResult && !loading && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-400 text-center">
+                  AI generated prescription will appear here.<br />
+                  Enter symptoms and medical history to begin.
+                </p>
+              </div>
+            )}
+
+            {loading && (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <svg className="animate-spin h-8 w-8 text-cyan-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-gray-300">Generating prescription...</p>
+                </div>
+              </div>
+            )}
+
             {aiResult && (
-              <pre className="whitespace-pre-wrap text-gray-100 overflow-y-auto max-h-96">{aiResult}</pre>
+              <div className="space-y-4">
+                <pre className="whitespace-pre-wrap text-gray-100 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  {aiResult}
+                </pre>
+                <button 
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg"
+                  onClick={() => {
+                    navigator.clipboard.writeText(aiResult);
+                    alert("Prescription copied to clipboard!");
+                  }}
+                >
+                  Copy to Clipboard
+                </button>
+              </div>
             )}
           </div>
         </div>
-        {/* Doctor Form Section */}
-        <div className="bg-gray-800 border border-cyan-600 border-opacity-30 rounded-xl p-6 shadow-md space-y-3 col-span-2 w-full">
-          <h4 className="text-xl font-semibold text-white mb-3">Prescription (to be filled by the doctor)</h4>
-          <div>
-            <label className="block text-gray-300 mb-1">Title</label>
-            <select
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+
+        {/* Recent Prescriptions */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-white">Recent Prescriptions</h3>
+            <button 
+              className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase
+                    .from("prescriptions")
+                    .select("*")
+                    .order("created_at", { ascending: false })
+                    .limit(5);
+                  if (error) throw error;
+                  setRecentPrescriptions(data as Prescription[]);
+                } catch (err) {
+                  console.error("Refresh error:", err);
+                  setError("Failed to refresh prescriptions");
+                }
+              }}
             >
-              <option>Master</option>
-              <option>Miss</option>
-              <option>Mr</option>
-              <option>Mrs</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-300 mb-1">Patient Name</label>
-            <textarea
-              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
-              rows={1}
-              placeholder="Enter patient name"
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-gray-300 mb-1">Age</label>
-            <select
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
-            >
-              {Array.from({ length: 100 }, (_, i) => (
-                <option key={i + 1}>{i + 1}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-300 mb-1">Gender</label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
-            >
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </div>
-          {/* Doctor's Fields - not saved, just for UI */}
-          {[
-            { label: "Diagnosis", placeholder: "e.g., Type 2 Diabetes Mellitus" },
-            { label: "Test/Surgery Suggested", placeholder: "e.g., CBC, MRI, or Appendectomy" },
-            { label: "Medications", placeholder: "e.g., Metformin 500mg twice a day" },
-            { label: "Dosage & Instructions", placeholder: "e.g., After meals, 12-hour gap" },
-            { label: "Follow-up Advice", placeholder: "e.g., Review after 15 days with fasting sugar report" },
-            { label: "Notes / Observations", placeholder: "e.g., Patient should avoid sugary food." }
-          ].map((field, index) => (
-            <div key={index}>
-              <label className="block text-gray-300 mb-1">{field.label}</label>
-              <textarea
-                className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
-                rows={2}
-                placeholder={field.placeholder}
-              />
-            </div>
-          ))}
-          <div className="text-right mt-4">
-            <button className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-6 rounded-lg">
-              Download PDF
+              Refresh List
             </button>
           </div>
-        </div>
-        {/* Recent Prescriptions */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6 overflow-y-auto max-h-[500px]">
-          <h3 className="text-xl font-semibold text-white mb-4">Recent Prescriptions</h3>
-          <div className="space-y-3">
+          
+          <div className="space-y-3 max-h-96 overflow-y-auto">
             {recentPrescriptions.length === 0 ? (
-              <p className="text-gray-400 text-sm">No recent prescriptions found.</p>
+              <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+                <p className="text-gray-400">No prescriptions found</p>
+              </div>
             ) : (
               recentPrescriptions.map((entry) => (
-                <div key={entry.id} className="bg-gray-800 rounded-lg p-4">
+                <div key={entry.id} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 transition-colors cursor-pointer">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="text-white font-medium">Patient: {entry.title} {entry.patient_name}, Age: {entry.age}, Gender: {entry.gender}</h4>
-                      <p className="text-gray-400 text-sm">
-                        <strong>Symptoms:</strong> {entry.symptoms.slice(0, 80)}...
+                      <h4 className="text-white font-medium">
+                        {entry.title} {entry.patient_name}, {entry.age} ({entry.gender})
+                      </h4>
+                      <p className="text-gray-400 text-sm mt-1">
+                        <span className="font-semibold">Symptoms:</span> {entry.symptoms.slice(0, 100)}...
                       </p>
-                      <p className="text-gray-400 text-sm">
-                        <strong>AI Result:</strong> {entry.ai_result.slice(0, 80)}...
+                      <p className="text-gray-400 text-sm mt-1">
+                        <span className="font-semibold">AI Result:</span> {entry.ai_result.slice(0, 100)}...
                       </p>
                     </div>
-                    <span className="text-xs text-cyan-400">
+                    <span className="text-xs text-cyan-400 whitespace-nowrap">
                       {new Date(entry.created_at).toLocaleString()}
                     </span>
                   </div>

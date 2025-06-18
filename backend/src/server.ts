@@ -25,7 +25,7 @@ if (!process.env.GEMINI_API_KEY || !process.env.CLERK_SECRET_KEY) {
   process.exit(1);
 }
 
-// Initialize Gemini AI
+// Initialize Gemini AI with Flash model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // Middleware
@@ -38,7 +38,6 @@ app.get(
   "/api/protected-route",
   ClerkExpressRequireAuth(),
   (req, res) => {
-    // Clerk augments req, so use a type assertion for auth
     const { auth } = req as RequireAuthProp<typeof req>;
     if (!auth?.userId) {
       res.status(401).json({ error: "Unauthorized" });
@@ -52,7 +51,6 @@ app.get(
 app.post("/api/gemini", async (req, res) => {
   try {
     const { prompt } = req.body;
-
     if (!prompt || typeof prompt !== "string") {
       res.status(400).json({ error: "Prompt must be a non-empty string." });
       return;
@@ -61,21 +59,17 @@ app.post("/api/gemini", async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const text = result.response.text?.() || "No response from Gemini.";
-
     res.json({ result: text });
   } catch (error: any) {
     console.error("❌ Gemini API Error:", error.message || error);
-
     if (error?.message?.includes("no text in response")) {
       res.status(500).json({ error: "Gemini returned an empty response." });
       return;
     }
-
     if (error.code === "ECONNREFUSED") {
       res.status(500).json({ error: "Failed to connect to Gemini API." });
       return;
     }
-
     res.status(500).json({ error: "Internal server error from Gemini API." });
   }
 });
