@@ -19,15 +19,12 @@ const prescriptionFormatPrompt = (symptoms: string, history: string) =>
 Medical history: ${history}
 Based on the above, generate an AI prescription in the following format only (do not add any other text, disclaimers, or asterisks):
 
-Analysing the Patient's symptoms and medical history, the best generated AI Prescription is as follows (As AI can make mistakes, kindly recheck thoroughly):
-
 1. Diagnosis: 
 2. Test/Surgery Suggested: 
 3. Medications: 
 4. Dosage and Instructions: 
 5. Follow-up advice: 
 6. Notes/Observations: 
-
 Fill in each point with the appropriate content. Do not add anything else.`;
 
 const Prescriptions = () => {
@@ -50,7 +47,6 @@ const Prescriptions = () => {
           .select("*")
           .order("created_at", { ascending: false })
           .limit(5);
-        
         if (error) throw error;
         setRecentPrescriptions(data as Prescription[]);
       } catch (err) {
@@ -65,7 +61,6 @@ const Prescriptions = () => {
     setLoading(true);
     setError("");
     setAiResult("");
-
     try {
       // Validate inputs
       if (!symptoms.trim() || !history.trim()) {
@@ -81,25 +76,42 @@ const Prescriptions = () => {
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || `API request failed with status ${response.status}`);
       }
 
       const result = data.result || "No result generated";
-      setAiResult(result);
+
+      // Add italicized disclaimer + line breaks between sections
+      const formattedResult = `
+*Note: The following prescription is AI-generated and intended for informational purposes only. It must be reviewed and confirmed by a licensed medical professional before use.
+
+${result
+  .split("\n")
+  .map((line) => {
+    const match = line.match(/^(\d+\. .+?:)/);
+    if (match) {
+      return `${line}\n`;
+    }
+    return line;
+  })
+  .join("\n")}
+`;
+
+      setAiResult(formattedResult.trim());
 
       // Save to Supabase
-      const { error: dbError } = await supabase.from("prescriptions").insert([{
-        title,
-        age,
-        gender,
-        patient_name: patientName,
-        symptoms,
-        history,
-        ai_result: result,
-      }]);
-
+      const { error: dbError } = await supabase.from("prescriptions").insert([
+        {
+          title,
+          age,
+          gender,
+          patient_name: patientName,
+          symptoms,
+          history,
+          ai_result: result,
+        },
+      ]);
       if (dbError) throw dbError;
 
       // Refresh recent prescriptions
@@ -108,9 +120,7 @@ const Prescriptions = () => {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(5);
-      
       if (newData) setRecentPrescriptions(newData as Prescription[]);
-
     } catch (err: any) {
       console.error("Generation Error:", err);
       setError(err.message || "Failed to generate prescription");
@@ -129,7 +139,6 @@ const Prescriptions = () => {
             Generate AI-powered prescriptions based on patient symptoms and medical history.
           </p>
         </div>
-
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input Section */}
@@ -163,55 +172,85 @@ const Prescriptions = () => {
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Generating...
                   </span>
-                ) : "Generate AI Prescription"}
+                ) : (
+                  "Generate AI Prescription"
+                )}
               </button>
             </div>
           </div>
-
           {/* Output Section */}
           <div className="bg-gray-900 border border-cyan-700 rounded-xl p-6 h-[600px] overflow-y-auto">
             <h4 className="text-xl font-semibold text-white mb-3">AI Generated Prescription</h4>
-            
             {error && (
               <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-4">
                 <p className="text-red-300 font-medium">Error:</p>
                 <p className="text-red-100">{error}</p>
               </div>
             )}
-
             {!aiResult && !loading && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-gray-400 text-center">
-                  AI generated prescription will appear here.<br />
+                  AI generated prescription will appear here.
+                  <br />
                   Enter symptoms and medical history to begin.
                 </p>
               </div>
             )}
-
             {loading && (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center space-y-2">
-                  <svg className="animate-spin h-8 w-8 text-cyan-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin h-8 w-8 text-cyan-500 mx-auto"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   <p className="text-gray-300">Generating prescription...</p>
                 </div>
               </div>
             )}
-
             {aiResult && (
               <div className="space-y-4">
                 <pre className="whitespace-pre-wrap text-gray-100 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
                   {aiResult}
                 </pre>
-                <button 
+                <button
                   className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg"
                   onClick={() => {
                     navigator.clipboard.writeText(aiResult);
@@ -224,12 +263,11 @@ const Prescriptions = () => {
             )}
           </div>
         </div>
-
         {/* Recent Prescriptions */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold text-white">Recent Prescriptions</h3>
-            <button 
+            <button
               className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
               onClick={async () => {
                 try {
@@ -249,7 +287,6 @@ const Prescriptions = () => {
               Refresh List
             </button>
           </div>
-          
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {recentPrescriptions.length === 0 ? (
               <div className="bg-gray-800/50 rounded-lg p-4 text-center">
@@ -257,7 +294,10 @@ const Prescriptions = () => {
               </div>
             ) : (
               recentPrescriptions.map((entry) => (
-                <div key={entry.id} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 transition-colors cursor-pointer">
+                <div
+                  key={entry.id}
+                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 transition-colors cursor-pointer"
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="text-white font-medium">
