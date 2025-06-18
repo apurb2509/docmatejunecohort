@@ -38,6 +38,14 @@ const Prescriptions = () => {
   const [error, setError] = useState("");
   const [recentPrescriptions, setRecentPrescriptions] = useState<Prescription[]>([]);
 
+  // Doctor form state
+  const [diagnosis, setDiagnosis] = useState("");
+  const [testSurgery, setTestSurgery] = useState("");
+  const [medications, setMedications] = useState("");
+  const [dosageInstructions, setDosageInstructions] = useState("");
+  const [followUpAdvice, setFollowUpAdvice] = useState("");
+  const [notesObservations, setNotesObservations] = useState("");
+
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
@@ -60,6 +68,12 @@ const Prescriptions = () => {
     setLoading(true);
     setError("");
     setAiResult("");
+    setDiagnosis("");
+    setTestSurgery("");
+    setMedications("");
+    setDosageInstructions("");
+    setFollowUpAdvice("");
+    setNotesObservations("");
     try {
       // Validate inputs
       if (!symptoms.trim() || !history.trim()) {
@@ -126,6 +140,27 @@ ${result
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutofill = () => {
+    if (!aiResult) {
+      alert("No AI result available to autofill.");
+      return;
+    }
+
+    const lines = aiResult.split("\n");
+
+    const extractValue = (prefix: string): string => {
+      const line = lines.find((line) => line.startsWith(prefix));
+      return line ? line.replace(prefix, "").trim().replace(/[\.\:\s]+$/, "") : "";
+    };
+
+    setDiagnosis(extractValue("1. Diagnosis:"));
+    setTestSurgery(extractValue("2. Test/Surgery Suggested:"));
+    setMedications(extractValue("3. Medications:"));
+    setDosageInstructions(extractValue("4. Dosage and Instructions:"));
+    setFollowUpAdvice(extractValue("5. Follow-up advice:"));
+    setNotesObservations(extractValue("6. Notes/Observations:"));
   };
 
   return (
@@ -253,12 +288,9 @@ ${result
                 </pre>
                 <button
                   className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg"
-                  onClick={() => {
-                    navigator.clipboard.writeText(aiResult);
-                    alert("Prescription copied to clipboard!");
-                  }}
+                  onClick={handleAutofill}
                 >
-                  Copy to Clipboard
+                  Autofill Prescription
                 </button>
               </div>
             )}
@@ -320,23 +352,66 @@ ${result
             </select>
           </div>
           {/* Doctor Fields */}
-          {[
-            { label: "Diagnosis", placeholder: "e.g., Type 2 Diabetes Mellitus" },
-            { label: "Test/Surgery Suggested", placeholder: "e.g., CBC, MRI, or Appendectomy" },
-            { label: "Medications", placeholder: "e.g., Metformin 500mg twice a day" },
-            { label: "Dosage & Instructions", placeholder: "e.g., After meals, 12-hour gap" },
-            { label: "Follow-up Advice", placeholder: "e.g., Review after 15 days with fasting sugar report" },
-            { label: "Notes / Observations", placeholder: "e.g., Patient should avoid sugary food." },
-          ].map((field, index) => (
-            <div key={index}>
-              <label className="block text-gray-300 mb-1">{field.label}</label>
-              <textarea
-                className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
-                rows={2}
-                placeholder={field.placeholder}
-              />
-            </div>
-          ))}
+          <div>
+            <label className="block text-gray-300 mb-1">Diagnosis</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., Type 2 Diabetes Mellitus"
+              value={diagnosis}
+              onChange={(e) => setDiagnosis(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Test/Surgery Suggested</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., CBC, MRI, or Appendectomy"
+              value={testSurgery}
+              onChange={(e) => setTestSurgery(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Medications</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., Metformin 500mg twice a day"
+              value={medications}
+              onChange={(e) => setMedications(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Dosage & Instructions</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., After meals, 12-hour gap"
+              value={dosageInstructions}
+              onChange={(e) => setDosageInstructions(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Follow-up Advice</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., Review after 15 days with fasting sugar report"
+              value={followUpAdvice}
+              onChange={(e) => setFollowUpAdvice(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Notes / Observations</label>
+            <textarea
+              className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-white"
+              rows={2}
+              placeholder="e.g., Patient should avoid sugary food."
+              value={notesObservations}
+              onChange={(e) => setNotesObservations(e.target.value)}
+            />
+          </div>
           {/* Download PDF Button */}
           <div className="text-right mt-4">
             <button className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-6 rounded-lg">
