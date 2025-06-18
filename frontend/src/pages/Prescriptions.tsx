@@ -1,6 +1,9 @@
 import MainLayout from "@/components/layout/MainLayout";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import html2pdf from "html2pdf.js";
+import { useUser } from "@clerk/clerk-react";
+import { useUserProfile } from "@/context/UserProfileContext";
 
 type Prescription = {
   id: string;
@@ -46,6 +49,12 @@ const Prescriptions = () => {
   const [followUpAdvice, setFollowUpAdvice] = useState("");
   const [notesObservations, setNotesObservations] = useState("");
 
+  // Get doctor info from Clerk
+  const { user } = useUser();
+  const { profile } = useUserProfile();
+  const [doctorName, setDoctorName] = useState("Dr. John Doe");
+  const [doctorSpecialization, setDoctorSpecialization] = useState("General Physician");
+
   useEffect(() => {
     const fetchPrescriptions = async () => {
       try {
@@ -62,6 +71,12 @@ const Prescriptions = () => {
       }
     };
     fetchPrescriptions();
+
+    // Set doctor info from user profile
+    if (user && profile) {
+      setDoctorName(user.fullName ? `Dr. ${user.fullName}` : "Dr. John Doe");
+      setDoctorSpecialization(profile.specialization || "General Physician");
+    }
   }, []);
 
   const handleGenerate = async () => {
@@ -97,7 +112,7 @@ const Prescriptions = () => {
 
       // Add italicized disclaimer + line breaks between sections
       const formattedResult = `
-*Note: The following prescription is AI-generated and intended for informational purposes only. It must be reviewed and confirmed by a licensed medical professional before use.
+Note: The following prescription is AI-generated and intended for informational purposes only. It must be reviewed and confirmed by a licensed medical professional before use.
 
 ${result
         .split("\n")
@@ -161,6 +176,179 @@ ${result
     setDosageInstructions(extractValue("4. Dosage and Instructions:"));
     setFollowUpAdvice(extractValue("5. Follow-up advice:"));
     setNotesObservations(extractValue("6. Notes/Observations:"));
+  };
+
+  const handleDownloadPDF = () => {
+    // Ensure all fields are filled
+    if (
+      !title ||
+      !patientName ||
+      !age ||
+      !gender ||
+      !diagnosis ||
+      !testSurgery ||
+      !medications ||
+      !dosageInstructions ||
+      !followUpAdvice ||
+      !notesObservations
+    ) {
+      alert("Please fill out all required fields before downloading the PDF.");
+      return;
+    }
+
+    // Create a temporary div to hold the PDF content
+    const pdfContentDiv = document.createElement("div");
+    pdfContentDiv.style.padding = "20px";
+    pdfContentDiv.style.width = "800px";
+    document.body.appendChild(pdfContentDiv);
+
+    const now = new Date();
+    const formattedTime = now.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    // Populate the PDF content using the provided format
+    pdfContentDiv.innerHTML = `
+      <style>
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+        }
+        .header {
+          background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .clinic-name {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .doctor-info {
+          font-size: 16px;
+          margin-bottom: 5px;
+        }
+        .contact-info {
+          font-size: 14px;
+          margin-top: 10px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          vertical-align: top;
+        }
+        th {
+          background-color: #e5e7eb;
+          font-weight: bold;
+          color: #1f2937;
+        }
+        .footer {
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .signature {
+          text-align: center;
+          margin-top: 40px;
+        }
+        .signature-line {
+          width: 200px;
+          border-top: 1px solid #000;
+          margin: 0 auto;
+          margin-top: 50px;
+        }
+        .stamp-placeholder {
+          width: 100px;
+          height: 100px;
+          border: 1px dashed #999;
+          margin: 20px auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+        }
+        .prescription-title {
+          text-align: center;
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 20px;
+          color: #1e40af;
+        }
+      </style>
+
+      <div class="header">
+        <div class="clinic-name">N6T Technologies</div>
+        <div class="doctor-info">${doctorName}, ${doctorSpecialization}</div>
+        <div class="contact-info">
+          Email: info@n6t.com | Phone: +91 1234 5678 | Address: Medical Complex, Bangalore
+        </div>
+      </div>
+
+      <div class="prescription-title">MEDICAL PRESCRIPTION</div>
+
+      <table>
+        <tr><th style="width: 30%;">Patient Name:</th><td>${title} ${patientName}</td></tr>
+        <tr><th>Age:</th><td>${age}</td></tr>
+        <tr><th>Gender:</th><td>${gender}</td></tr>
+        <tr><th>Date & Time:</th><td>${formattedTime}</td></tr>
+        <tr><th>Diagnosis:</th><td>${diagnosis}</td></tr>
+        <tr><th>Test/Surgery Suggested:</th><td>${testSurgery}</td></tr>
+        <tr><th>Medications:</th><td>${medications}</td></tr>
+        <tr><th>Dosage & Instructions:</th><td>${dosageInstructions}</td></tr>
+        <tr><th>Follow-up Advice:</th><td>${followUpAdvice}</td></tr>
+        <tr><th>Notes / Observations:</th><td>${notesObservations}</td></tr>
+      </table>
+
+      <div class="footer">
+        <div class="signature">
+          <div class="stamp-placeholder">Doctor's Stamp</div>
+          <div class="signature-line"></div>
+          <p><strong>Signature:</strong></p>
+        </div>
+        <div style="font-size: 0.8em; color: #666;">
+          <p>This is a computer generated prescription</p>
+          <p>Valid only with doctor's signature and stamp</p>
+        </div>
+      </div>
+    `;
+
+    // Generate the PDF using html2pdf.js
+    html2pdf()
+      .set({
+        margin: 10,
+        filename: `Prescription_${patientName.replace(/\s+/g, '_')}_${now.toISOString().slice(0, 10)}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, logging: true, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(pdfContentDiv)
+      .save()
+      .then(() => {
+        // Clean up the temporary div
+        document.body.removeChild(pdfContentDiv);
+      })
+      .catch((err) => {
+        console.error("PDF generation error:", err);
+        alert("Failed to generate PDF. Please try again.");
+        document.body.removeChild(pdfContentDiv);
+      });
   };
 
   return (
@@ -300,7 +488,6 @@ ${result
         {/* Prescription Form (to be filled by the doctor) */}
         <div className="bg-gray-800 border border-cyan-600 border-opacity-30 rounded-xl p-6 shadow-md space-y-3">
           <h4 className="text-xl font-semibold text-white mb-3">Prescription (to be filled by the doctor)</h4>
-          {/* Title */}
           <div>
             <label className="block text-gray-300 mb-1">Title</label>
             <select
@@ -314,7 +501,6 @@ ${result
               <option>Mrs</option>
             </select>
           </div>
-          {/* Name */}
           <div>
             <label className="block text-gray-300 mb-1">Patient Name</label>
             <textarea
@@ -325,7 +511,6 @@ ${result
               onChange={(e) => setPatientName(e.target.value)}
             />
           </div>
-          {/* Age */}
           <div>
             <label className="block text-gray-300 mb-1">Age</label>
             <select
@@ -338,7 +523,6 @@ ${result
               ))}
             </select>
           </div>
-          {/* Gender */}
           <div>
             <label className="block text-gray-300 mb-1">Gender</label>
             <select
@@ -351,7 +535,6 @@ ${result
               <option>Other</option>
             </select>
           </div>
-          {/* Doctor Fields */}
           <div>
             <label className="block text-gray-300 mb-1">Diagnosis</label>
             <textarea
@@ -412,9 +595,11 @@ ${result
               onChange={(e) => setNotesObservations(e.target.value)}
             />
           </div>
-          {/* Download PDF Button */}
           <div className="text-right mt-4">
-            <button className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-6 rounded-lg">
+            <button
+              className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 px-6 rounded-lg"
+              onClick={handleDownloadPDF}
+            >
               Download PDF
             </button>
           </div>
