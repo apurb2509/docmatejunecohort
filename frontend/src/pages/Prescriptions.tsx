@@ -14,6 +14,22 @@ type Prescription = {
   created_at: string;
 };
 
+const prescriptionFormatPrompt = (symptoms: string, history: string) =>
+  `Patient symptoms: ${symptoms}
+Medical history: ${history}
+Based on the above, generate an AI prescription in the following format only (do not add any other text, disclaimers, or asterisks):
+
+Analysing the Patient's symptoms and medical history, the best generated AI Prescription is as follows (As AI can make mistakes, kindly recheck thoroughly):
+
+1. Diagnosis: 
+2. Test/Surgery Suggested: 
+3. Medications: 
+4. Dosage and Instructions: 
+5. Follow-up advice: 
+6. Notes/Observations: 
+
+Fill in each point with the appropriate content. Do not add anything else.`;
+
 const Prescriptions = () => {
   const [title, setTitle] = useState("Mr");
   const [age, setAge] = useState("25");
@@ -51,9 +67,7 @@ const Prescriptions = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Patient symptoms: ${symptoms}
-Medical history: ${history}
-Generate a detailed prescription based on this.`,
+          prompt: prescriptionFormatPrompt(symptoms, history),
         }),
       });
 
