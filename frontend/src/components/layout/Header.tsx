@@ -106,11 +106,11 @@ const Header = ({ onLogout }: HeaderProps) => {
         <img
           src={docmateLogo}
           alt="DocMate Logo"
-          className="w-12 h-12 rounded-lg mr-3 shadow-lg object-cover"
+          className="w-12 h-12  rounded-lg mr-3 shadow-lg object-cover"
         />
         <div className="flex flex-col leading-tight">
-          <h1 className="text-2xl font-bold text-white">DocMate</h1>
-          <span className="text-[12px] text-gray-300 -mt-1">The Doctor's Ally</span>
+          <h1 className="text-3xl font-bold text-white">DocMate</h1>
+          <span className="text-[13px] text-gray-300 -mt-1">The Doctor's Ally</span>
         </div>
       </div>
       
