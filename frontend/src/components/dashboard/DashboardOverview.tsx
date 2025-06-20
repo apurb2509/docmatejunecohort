@@ -1,9 +1,29 @@
-
+import { useEffect, useState } from "react";
 import StatisticsCards from "./StatisticsCards";
 import ActivityFeed from "./ActivityFeed";
 import ScheduleTimeline from "./ScheduleTimeline";
+import { useUser } from "@clerk/clerk-react";
+import { useUserProfile } from "@/context/UserProfileContext";
 
 const DashboardOverview = () => {
+  const { user } = useUser();
+  const { profile } = useUserProfile();
+  const [displayName, setDisplayName] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      const userId = user.id;
+      const prefix = `user_${userId}`;
+      const isInitialized = localStorage.getItem(`${prefix}_initialized`);
+      if (isInitialized) {
+        const storedName = localStorage.getItem(`${prefix}_fullName`) || "";
+        setDisplayName(storedName);
+      } else {
+        setDisplayName(user.fullName || "Dr. Unknown");
+      }
+    }
+  }, [user, profile]);
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -11,20 +31,23 @@ const DashboardOverview = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              Welcome back, Dr. Chen
+              Welcome back, {displayName || "Dr. Unknown"}
             </h1>
             <p className="text-gray-300">
-              Today is {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              Today is{" "}
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-cyan-400">14:23</div>
-            <div className="text-sm text-gray-400">Next appointment in 37 min</div>
+            <div className="text-2xl font-bold text-cyan-400">No active schedule</div>
+            <div className="text-sm text-gray-400">
+              New appointments will be notified here.
+            </div>
           </div>
         </div>
       </div>
