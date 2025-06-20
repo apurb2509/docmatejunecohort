@@ -76,9 +76,10 @@ app.post("/api/gemini", (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ error: "Internal server error from Gemini API." });
     }
 }));
+// ✅ Only listen when executed directly (important for some environments like testing or bundlers)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Backend running at http://localhost:${PORT}`);
+    });
+}
 exports.default = app;
-// ✅ Backend verified locally 2025-06-20
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Backend running at http://localhost:${PORT}`);
-});

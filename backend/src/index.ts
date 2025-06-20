@@ -9,7 +9,7 @@ import {
   ClerkExpressRequireAuth,
   RequireAuthProp,
 } from '@clerk/clerk-sdk-node';
-import geminiRouter from './routes/gemini';
+import geminiRouter from './routes/gemini'; // Optional route
 
 dotenv.config();
 
@@ -36,6 +36,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const CURRENT_GEMINI_MODEL = 'gemini-1.5-flash';
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -46,7 +47,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check route
+// Health check
 app.get('/api/health', (_: Request, res: Response): void => {
   res.json({
     status: 'healthy',
@@ -68,7 +69,7 @@ app.get('/api/protected-route', ClerkExpressRequireAuth(), async (req: Request, 
   res.json({ message: 'Access granted', userId: auth.userId });
 });
 
-// Gemini route (inline fallback if needed)
+// Gemini inline route
 app.post('/api/gemini', async (req: Request, res: Response): Promise<void> => {
   try {
     const { prompt } = req.body;
@@ -104,7 +105,10 @@ app.post('/api/gemini', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Or optionally mount separate Gemini route
-// app.use("/api/gemini", geminiRouter);
+// Optional separate Gemini router
+// app.use('/api/gemini', geminiRouter);
 
-export default app;
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ Server is running at http://localhost:${PORT}`);
+});

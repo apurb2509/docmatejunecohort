@@ -36,6 +36,7 @@ const supabase = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, proce
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const CURRENT_GEMINI_MODEL = 'gemini-1.5-flash';
 const app = (0, express_1.default)();
+const PORT = process.env.PORT || 3000;
 app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
 app.use((0, clerk_sdk_node_1.ClerkExpressWithAuth)({}));
@@ -43,7 +44,7 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
-// Health check route
+// Health check
 app.get('/api/health', (_, res) => {
     res.json({
         status: 'healthy',
@@ -63,7 +64,7 @@ app.get('/api/protected-route', (0, clerk_sdk_node_1.ClerkExpressRequireAuth)(),
     }
     res.json({ message: 'Access granted', userId: auth.userId });
 }));
-// Gemini route (inline fallback if needed)
+// Gemini inline route
 app.post('/api/gemini', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -94,6 +95,9 @@ app.post('/api/gemini', (req, res) => __awaiter(void 0, void 0, void 0, function
         });
     }
 }));
-// Or optionally mount separate Gemini route
-// app.use("/api/gemini", geminiRouter);
-exports.default = app;
+// Optional separate Gemini router
+// app.use('/api/gemini', geminiRouter);
+// Start server
+app.listen(PORT, () => {
+    console.log(`✅ Server is running at http://localhost:${PORT}`);
+});
