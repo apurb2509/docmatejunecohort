@@ -79,11 +79,11 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
+// ✅ Only listen when executed directly (important for some environments like testing or bundlers)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Backend running at http://localhost:${PORT}`);
+  });
+}
+
 export default app;
-
-// ✅ Backend verified locally 2025-06-20
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running at http://localhost:${PORT}`);
-});
