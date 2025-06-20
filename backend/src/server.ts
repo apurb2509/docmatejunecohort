@@ -74,6 +74,9 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
+export default app;
+
+
 // ✅ Backend verified locally 2025-06-20
 
 // Start server
