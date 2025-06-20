@@ -81,7 +81,7 @@ const Settings = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
             <h3 className="text-xl font-semibold text-white mb-4">Profile Settings</h3>
             <div className="space-y-4">
               <div>

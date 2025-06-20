@@ -90,7 +90,6 @@ const Prescriptions = () => {
     setFollowUpAdvice("");
     setNotesObservations("");
     try {
-      // Validate inputs
       if (!symptoms.trim() || !history.trim()) {
         throw new Error("Please enter both symptoms and medical history");
       }
@@ -109,11 +108,8 @@ const Prescriptions = () => {
       }
 
       const result = data.result || "No result generated";
-
-      // Add italicized disclaimer + line breaks between sections
       const formattedResult = `
 Note: The following prescription is AI-generated and intended for informational purposes only. It must be reviewed and confirmed by a licensed medical professional before use.
-
 ${result
         .split("\n")
         .map((line) => {
@@ -128,7 +124,6 @@ ${result
 
       setAiResult(formattedResult.trim());
 
-      // Save to Supabase
       const { error: dbError } = await supabase.from("prescriptions").insert([
         {
           title,
@@ -149,6 +144,7 @@ ${result
         .order("created_at", { ascending: false })
         .limit(5);
       if (newData) setRecentPrescriptions(newData as Prescription[]);
+
     } catch (err: any) {
       console.error("Generation Error:", err);
       setError(err.message || "Failed to generate prescription");
@@ -162,9 +158,7 @@ ${result
       alert("No AI result available to autofill.");
       return;
     }
-
     const lines = aiResult.split("\n");
-
     const extractValue = (prefix: string): string => {
       const line = lines.find((line) => line.startsWith(prefix));
       return line ? line.replace(prefix, "").trim().replace(/[\.\:\s]+$/, "") : "";
@@ -179,7 +173,6 @@ ${result
   };
 
   const handleDownloadPDF = () => {
-    // Ensure all fields are filled
     if (
       !title ||
       !patientName ||
@@ -196,7 +189,6 @@ ${result
       return;
     }
 
-    // Create a temporary div to hold the PDF content
     const pdfContentDiv = document.createElement("div");
     pdfContentDiv.style.padding = "20px";
     pdfContentDiv.style.width = "800px";
@@ -212,7 +204,6 @@ ${result
       year: "numeric",
     });
 
-    // Populate the PDF content using the provided format
     pdfContentDiv.innerHTML = `
       <style>
         @page {
@@ -292,7 +283,6 @@ ${result
           color: #1e40af;
         }
       </style>
-
       <div class="header">
         <div class="clinic-name">N6T Technologies</div>
         <div class="doctor-info">${doctorName}, ${doctorSpecialization}</div>
@@ -300,9 +290,7 @@ ${result
           Email: info@n6t.com | Phone: +91 1234 5678 | Address: Medical Complex, Bangalore
         </div>
       </div>
-
       <div class="prescription-title">MEDICAL PRESCRIPTION</div>
-
       <table>
         <tr><th style="width: 30%;">Patient Name:</th><td>${title} ${patientName}</td></tr>
         <tr><th>Age:</th><td>${age}</td></tr>
@@ -315,7 +303,6 @@ ${result
         <tr><th>Follow-up Advice:</th><td>${followUpAdvice}</td></tr>
         <tr><th>Notes / Observations:</th><td>${notesObservations}</td></tr>
       </table>
-
       <div class="footer">
         <div class="signature">
           <div class="stamp-placeholder">Doctor's Stamp</div>
@@ -329,11 +316,196 @@ ${result
       </div>
     `;
 
-    // Generate the PDF using html2pdf.js
     html2pdf()
       .set({
         margin: 10,
-        filename: `Prescription_${patientName.replace(/\s+/g, '_')}_${now.toISOString().slice(0, 10)}.pdf`,
+        filename: `Prescription_${patientName.replace(/\s+/g, "_")}_${now.toISOString().slice(0, 10)}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, logging: true, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(pdfContentDiv)
+      .save()
+      .then(async () => {
+        document.body.removeChild(pdfContentDiv);
+
+        // Refresh recent prescriptions after download
+        const { data: newData } = await supabase
+          .from("prescriptions")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        if (newData) setRecentPrescriptions(newData as Prescription[]);
+      })
+      .catch((err) => {
+        console.error("PDF generation error:", err);
+        alert("Failed to generate PDF. Please try again.");
+        document.body.removeChild(pdfContentDiv);
+      });
+  };
+
+  const refreshPrescriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      setRecentPrescriptions(data as Prescription[]);
+    } catch (err) {
+      console.error("Refresh error:", err);
+      setError("Failed to refresh prescriptions");
+    }
+  };
+
+  const handleDownloadFromList = (entry: Prescription) => {
+    const {
+      patient_name: pName,
+      age: pAge,
+      gender: pGender,
+      title: pTitle,
+      ai_result: aiRes,
+    } = entry;
+
+    const diagnosis = extractAIField(aiRes, "1. Diagnosis:");
+    const testSurgery = extractAIField(aiRes, "2. Test/Surgery Suggested:");
+    const medications = extractAIField(aiRes, "3. Medications:");
+    const dosageInstructions = extractAIField(aiRes, "4. Dosage and Instructions:");
+    const followUpAdvice = extractAIField(aiRes, "5. Follow-up advice:");
+    const notesObservations = extractAIField(aiRes, "6. Notes/Observations:");
+
+    const pdfContentDiv = document.createElement("div");
+    pdfContentDiv.style.padding = "20px";
+    pdfContentDiv.style.width = "800px";
+    document.body.appendChild(pdfContentDiv);
+
+    const now = new Date();
+    const formattedTime = now.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    pdfContentDiv.innerHTML = `
+      <style>
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+        }
+        .header {
+          background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .clinic-name {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .doctor-info {
+          font-size: 16px;
+          margin-bottom: 5px;
+        }
+        .contact-info {
+          font-size: 14px;
+          margin-top: 10px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #d1d5db;
+          padding: 12px;
+          vertical-align: top;
+        }
+        th {
+          background-color: #e5e7eb;
+          font-weight: bold;
+          color: #1f2937;
+        }
+        .footer {
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .signature {
+          text-align: center;
+          margin-top: 40px;
+        }
+        .signature-line {
+          width: 200px;
+          border-top: 1px solid #000;
+          margin: 0 auto;
+          margin-top: 50px;
+        }
+        .stamp-placeholder {
+          width: 100px;
+          height: 100px;
+          border: 1px dashed #999;
+          margin: 20px auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+        }
+        .prescription-title {
+          text-align: center;
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 20px;
+          color: #1e40af;
+        }
+      </style>
+      <div class="header">
+        <div class="clinic-name">N6T Technologies</div>
+        <div class="doctor-info">${doctorName}, ${doctorSpecialization}</div>
+        <div class="contact-info">
+          Email: info@n6t.com | Phone: +91 1234 5678 | Address: Medical Complex, Bangalore
+        </div>
+      </div>
+      <div class="prescription-title">MEDICAL PRESCRIPTION</div>
+      <table>
+        <tr><th style="width: 30%;">Patient Name:</th><td>${pTitle} ${pName}</td></tr>
+        <tr><th>Age:</th><td>${pAge}</td></tr>
+        <tr><th>Gender:</th><td>${pGender}</td></tr>
+        <tr><th>Date & Time:</th><td>${formattedTime}</td></tr>
+        <tr><th>Diagnosis:</th><td>${diagnosis}</td></tr>
+        <tr><th>Test/Surgery Suggested:</th><td>${testSurgery}</td></tr>
+        <tr><th>Medications:</th><td>${medications}</td></tr>
+        <tr><th>Dosage & Instructions:</th><td>${dosageInstructions}</td></tr>
+        <tr><th>Follow-up Advice:</th><td>${followUpAdvice}</td></tr>
+        <tr><th>Notes / Observations:</th><td>${notesObservations}</td></tr>
+      </table>
+      <div class="footer">
+        <div class="signature">
+          <div class="stamp-placeholder">Doctor's Stamp</div>
+          <div class="signature-line"></div>
+          <p><strong>Signature:</strong></p>
+        </div>
+        <div style="font-size: 0.8em; color: #666;">
+          <p>This is a computer generated prescription</p>
+          <p>Valid only with doctor's signature and stamp</p>
+        </div>
+      </div>
+    `;
+
+    html2pdf()
+      .set({
+        margin: 10,
+        filename: `Prescription_${pName.replace(/\s+/g, "_")}_${now.toISOString().slice(0, 10)}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, logging: true, useCORS: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -341,7 +513,6 @@ ${result
       .from(pdfContentDiv)
       .save()
       .then(() => {
-        // Clean up the temporary div
         document.body.removeChild(pdfContentDiv);
       })
       .catch((err) => {
@@ -349,6 +520,12 @@ ${result
         alert("Failed to generate PDF. Please try again.");
         document.body.removeChild(pdfContentDiv);
       });
+  };
+
+  const extractAIField = (text: string, prefix: string): string => {
+    const lines = text.split("\n");
+    const match = lines.find((line) => line.startsWith(prefix));
+    return match ? match.replace(prefix, "").trim() : "";
   };
 
   return (
@@ -365,7 +542,7 @@ ${result
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input Section */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6 h-[600px] flex flex-col">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6 h-[600px] flex flex-col">
             <h3 className="text-xl font-semibold text-white mb-4">Create New Prescription</h3>
             <div className="flex flex-col gap-4 flex-grow">
               <div className="flex-1 flex flex-col">
@@ -395,25 +572,9 @@ ${result
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     Generating...
                   </span>
@@ -425,7 +586,7 @@ ${result
           </div>
 
           {/* Output Section */}
-          <div className="bg-gray-900 border border-cyan-700 rounded-xl p-6 h-[600px] overflow-y-auto">
+          <div className="bg-gray-900 border bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 border-[#2e5ba3] rounded-xl p-6 h-[600px] overflow-y-auto">
             <h4 className="text-xl font-semibold text-white mb-3">AI Generated Prescription</h4>
             {error && (
               <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-4">
@@ -436,8 +597,7 @@ ${result
             {!aiResult && !loading && (
               <div className="h-full flex items-center justify-center">
                 <p className="text-gray-400 text-center">
-                  AI generated prescription will appear here.
-                  <br />
+                  AI generated prescription will appear here.<br />
                   Enter symptoms and medical history to begin.
                 </p>
               </div>
@@ -445,25 +605,9 @@ ${result
             {loading && (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center space-y-2">
-                  <svg
-                    className="animate-spin h-8 w-8 text-cyan-500 mx-auto"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                  <svg className="animate-spin h-8 w-8 text-cyan-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   <p className="text-gray-300">Generating prescription...</p>
                 </div>
@@ -486,7 +630,7 @@ ${result
         </div>
 
         {/* Prescription Form (to be filled by the doctor) */}
-        <div className="bg-gray-800 border border-cyan-600 border-opacity-30 rounded-xl p-6 shadow-md space-y-3">
+        <div className="bg-gray-800 border bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 border-[#2e5ba3] border-opacity-30 rounded-xl p-6 shadow-md space-y-3">
           <h4 className="text-xl font-semibold text-white mb-3">Prescription (to be filled by the doctor)</h4>
           <div>
             <label className="block text-gray-300 mb-1">Title</label>
@@ -606,59 +750,52 @@ ${result
         </div>
 
         {/* Recent Prescriptions */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold text-white">Recent Prescriptions</h3>
             <button
               className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase
-                    .from("prescriptions")
-                    .select("*")
-                    .order("created_at", { ascending: false })
-                    .limit(5);
-                  if (error) throw error;
-                  setRecentPrescriptions(data as Prescription[]);
-                } catch (err) {
-                  console.error("Refresh error:", err);
-                  setError("Failed to refresh prescriptions");
-                }
-              }}
+              onClick={refreshPrescriptions}
             >
               Refresh List
             </button>
           </div>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {recentPrescriptions.length === 0 ? (
-              <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-                <p className="text-gray-400">No prescriptions found</p>
-              </div>
-            ) : (
-              recentPrescriptions.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 transition-colors cursor-pointer"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-white font-medium">
-                        {entry.title} {entry.patient_name}, {entry.age} ({entry.gender})
-                      </h4>
-                      <p className="text-gray-400 text-sm mt-1">
-                        <span className="font-semibold">Symptoms:</span> {entry.symptoms.slice(0, 100)}...
-                      </p>
-                      <p className="text-gray-400 text-sm mt-1">
-                        <span className="font-semibold">AI Result:</span> {entry.ai_result.slice(0, 100)}...
-                      </p>
-                    </div>
-                    <span className="text-xs text-cyan-400 whitespace-nowrap">
-                      {new Date(entry.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-gray-800 text-white border border-gray-700 rounded-lg overflow-hidden">
+              <thead className="bg-gray-900">
+                <tr>
+                  <th className="py-2 px-4 border-b border-gray-700">#</th>
+                  <th className="py-2 px-4 border-b border-gray-700">Patient Name</th>
+                  <th className="py-2 px-4 border-b border-gray-700">Age</th>
+                  <th className="py-2 px-4 border-b border-gray-700">Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPrescriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-gray-400">
+                      No prescriptions found
+                    </td>
+                  </tr>
+                ) : (
+                  recentPrescriptions.map((entry, index) => (
+                    <tr key={entry.id} className="hover:bg-gray-700/50 transition-colors">
+                      <td className="py-3 px-4 border-b border-gray-700 text-center">{index + 1}</td>
+                      <td className="py-3 px-4 border-b border-gray-700">{entry.patient_name}</td>
+                      <td className="py-3 px-4 border-b border-gray-700 text-center">{entry.age}</td>
+                      <td className="py-3 px-4 border-b border-gray-700 text-center">
+                        <button
+                          className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs px-3 py-1 rounded"
+                          onClick={() => handleDownloadFromList(entry)}
+                        >
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

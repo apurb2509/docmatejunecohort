@@ -1,4 +1,3 @@
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -9,10 +8,12 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              <div className="w-8 h-8 mr-3">
+                <img 
+                  src="/src/components/logo/docmate_logo.png" 
+                  alt="DocMate Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-xl font-bold text-white dark:text-white light:text-gray-800">DocMate</span>
             </div>
@@ -23,14 +24,22 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="text-white font-semibold dark:text-white light:text-gray-800">Quick Links</h3>
-            <div className="space-y-2">
-              <a href="#" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">Patient Management</a>
-              <a href="#" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">AI Prescriptions</a>
-              <a href="#" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">Analytics</a>
-              <a href="#" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">Settings</a>
-            </div>
-          </div>
+  <h3 className="text-white font-semibold dark:text-white light:text-gray-800">Quick Links</h3>
+  <div className="space-y-2">
+    <a href="/patients" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">
+      Patient Management
+    </a>
+    <a href="/prescriptions" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">
+      AI Prescriptions
+    </a>
+    <a href="/analytics" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">
+      Analytics
+    </a>
+    <a href="/settings" className="block text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">
+      Settings
+    </a>
+  </div>
+</div>
 
           {/* Compliance */}
           <div className="space-y-4">
@@ -77,7 +86,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center dark:border-gray-700 light:border-gray-300">
           <div className="text-gray-400 text-sm mb-4 md:mb-0 dark:text-gray-400 light:text-gray-600">
-            © {currentYear} DocMate Healthcare Solutions. All rights reserved.
+            © {currentYear} DocMate - The Doctor's Ally. All rights reserved.
           </div>
           <div className="flex space-x-6">
             <a href="#" className="text-gray-400 hover:text-cyan-400 text-sm transition-colors dark:text-gray-400 dark:hover:text-cyan-400 light:text-gray-600 light:hover:text-blue-600">Privacy Policy</a>

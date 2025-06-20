@@ -1,4 +1,3 @@
-
 import MainLayout from "@/components/layout/MainLayout";
 
 const Analytics = () => {
@@ -16,7 +15,7 @@ const Analytics = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">AI Accuracy</h3>
               <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
@@ -29,7 +28,7 @@ const Analytics = () => {
             <div className="text-green-400 text-sm">+2.3% from last month</div>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Prescriptions</h3>
               <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -42,7 +41,7 @@ const Analytics = () => {
             <div className="text-blue-400 text-sm">This month</div>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Time Saved</h3>
               <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
@@ -55,7 +54,7 @@ const Analytics = () => {
             <div className="text-purple-400 text-sm">This week</div>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Patient Satisfaction</h3>
               <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
@@ -69,7 +68,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#21314d] to-[#2e5ba3] border border-gray-700 rounded-xl p-6">
           <h3 className="text-xl font-semibold text-white mb-4">Performance Trends</h3>
           <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center">
             <p className="text-gray-400">Chart visualization will be implemented here</p>
