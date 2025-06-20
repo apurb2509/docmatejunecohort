@@ -84,6 +84,6 @@ export default app;
 // ✅ Backend verified locally 2025-06-20
 
 // Start server
-// app.listen(PORT, () => {
-//   console.log(`🚀 Backend running at http://localhost:${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running at http://localhost:${PORT}`);
+});
