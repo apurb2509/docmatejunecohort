@@ -75,6 +75,6 @@ app.post("/api/gemini", async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running at http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`🚀 Backend running at http://localhost:${PORT}`);
+// });
