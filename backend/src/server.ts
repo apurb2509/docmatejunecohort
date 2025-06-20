@@ -74,6 +74,8 @@ app.post("/api/gemini", async (req, res) => {
   }
 });
 
+// Trigger Vercel backend deployment
+
 // Start server
 // app.listen(PORT, () => {
 //   console.log(`🚀 Backend running at http://localhost:${PORT}`);
