@@ -32,16 +32,12 @@ const StatisticsCards = () => {
   ];
 
   const cardBaseStyle =
-    "group transform hover:scale-[1.03] transition-all duration-300 shadow-md hover:shadow-xl border border-blue-200";
-
-  const backgroundStyle = {
-    background: "linear-gradient(to bottom right, #2e5ba3, #ffffff20)",
-  };
+    "group transform hover:scale-[1.03] transition-all duration-300 shadow-md hover:shadow-xl border border-blue-200 bg-[linear-gradient(to_bottom_right,#2e5ba3,#ffffff20)]";
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {/* Patients Visited */}
-      <Card className={cardBaseStyle} style={backgroundStyle}>
+      <Card className={cardBaseStyle}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center text-gray-800">
             <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +69,7 @@ const StatisticsCards = () => {
       </Card>
 
       {/* Scheduled Appointments */}
-      <Card className={cardBaseStyle} style={backgroundStyle}>
+      <Card className={cardBaseStyle}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center text-gray-800">
             <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +101,7 @@ const StatisticsCards = () => {
       </Card>
 
       {/* Office Announcements */}
-      <Card className={cardBaseStyle} style={backgroundStyle}>
+      <Card className={cardBaseStyle}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center text-gray-800">
             <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +126,7 @@ const StatisticsCards = () => {
       </Card>
 
       {/* Calendar & Holidays */}
-      <Card className={cardBaseStyle} style={backgroundStyle}>
+      <Card className={cardBaseStyle}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center text-gray-800">
             <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
