@@ -3,9 +3,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
-// Base64 image or use the path from your static assets if preferred
-const cardBackgroundImage = "url('/mnt/data/b988046e-9110-4652-8f5d-b49c4e6cac29.png')";
-
 const StatisticsCards = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
@@ -36,12 +33,9 @@ const StatisticsCards = () => {
 
   const cardBaseStyle =
     "group transform hover:scale-[1.03] transition-all duration-300 shadow-md hover:shadow-xl border border-blue-200";
+
   const backgroundStyle = {
-    backgroundImage: cardBackgroundImage,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundBlendMode: "lighten",
-    backgroundColor: "rgba(255,255,255,0.7)"
+    background: "linear-gradient(to bottom right, #2e5ba3, #ffffff20)",
   };
 
   return (
@@ -72,7 +66,7 @@ const StatisticsCards = () => {
             </div>
           </div>
           <div className="flex items-center justify-between pt-2">
-            <span className="text-sm text-gray-600">Status</span>
+            <span className="text-sm" style={{ color: "#21314c" }}>Status</span>
             <Badge className="bg-green-500 text-white">Active</Badge>
           </div>
         </CardContent>
@@ -104,8 +98,8 @@ const StatisticsCards = () => {
             </div>
           </div>
           <div className="flex items-center justify-between pt-2">
-            <span className="text-sm text-gray-600">Next Appointment</span>
-            <Badge className="bg-blue-500 text-white">10:30 AM</Badge>
+            <span className="text-sm" style={{ color: "#21314c" }}>Next Appointment</span>
+            <Badge className="bg-blue-500 text-white">N/A</Badge>
           </div>
         </CardContent>
       </Card>
@@ -129,7 +123,7 @@ const StatisticsCards = () => {
             ))}
           </div>
           <div className="flex items-center justify-between pt-2">
-            <span className="text-sm text-gray-600">Front Desk Chat</span>
+            <span className="text-sm" style={{ color: "#21314c" }}>Front Desk Chat</span>
             <Badge className="bg-purple-500 text-white">3 New</Badge>
           </div>
         </CardContent>
@@ -182,7 +176,7 @@ const StatisticsCards = () => {
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Working Days</span>
+            <span className="text-sm" style={{ color: "#21314c" }}>Working Days</span>
             <Badge className="bg-green-500 text-white">Mon - Sat</Badge>
           </div>
         </CardContent>
