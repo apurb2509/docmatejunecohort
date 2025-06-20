@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
@@ -9,6 +9,7 @@ import {
   ClerkExpressRequireAuth,
   RequireAuthProp,
 } from '@clerk/clerk-sdk-node';
+import geminiRouter from './routes/gemini';
 
 dotenv.config();
 
@@ -46,7 +47,7 @@ app.use((req, res, next) => {
 });
 
 // Health check route
-app.get('/api/health', (_, res) => {
+app.get('/api/health', (_: Request, res: Response): void => {
   res.json({
     status: 'healthy',
     services: {
@@ -58,23 +59,25 @@ app.get('/api/health', (_, res) => {
 });
 
 // Protected route
-app.get('/api/protected-route', ClerkExpressRequireAuth(), (req, res) => {
+app.get('/api/protected-route', ClerkExpressRequireAuth(), async (req: Request, res: Response): Promise<void> => {
   const { auth } = req as RequireAuthProp<typeof req>;
   if (!auth?.userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
   }
   res.json({ message: 'Access granted', userId: auth.userId });
 });
 
-// Gemini route
-app.post('/api/gemini', async (req, res) => {
+// Gemini route (inline fallback if needed)
+app.post('/api/gemini', async (req: Request, res: Response): Promise<void> => {
   try {
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid request',
         details: 'Prompt must be a non-empty string'
       });
+      return;
     }
 
     console.log(`Using Gemini model: ${CURRENT_GEMINI_MODEL}`);
@@ -83,7 +86,7 @@ app.post('/api/gemini', async (req, res) => {
     const response = await result.response;
     const text = response.text();
 
-    return res.json({
+    res.json({
       success: true,
       result: text
     });
@@ -93,12 +96,15 @@ app.post('/api/gemini', async (req, res) => {
       stack: error.stack,
       ...(error.response?.data ? { apiResponse: error.response.data } : {})
     });
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Failed to generate content',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       model: CURRENT_GEMINI_MODEL
     });
   }
 });
+
+// Or optionally mount separate Gemini route
+// app.use("/api/gemini", geminiRouter);
 
 export default app;
