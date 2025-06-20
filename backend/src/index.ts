@@ -4,11 +4,14 @@ import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  ClerkExpressWithAuth,
+  ClerkExpressRequireAuth,
+  RequireAuthProp,
+} from '@clerk/clerk-sdk-node';
 
-// Load environment variables
 dotenv.config();
 
-// Validate environment variables
 const requiredEnvVars = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -23,31 +26,28 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
-// Initialize services
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const CURRENT_GEMINI_MODEL = 'gemini-1.5-flash'; // Updated to flash
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const CURRENT_GEMINI_MODEL = 'gemini-1.5-flash';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(ClerkExpressWithAuth({}));
 
-// Enhanced logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
+// Health check route
+app.get('/api/health', (_, res) => {
+  res.json({
     status: 'healthy',
     services: {
       supabase: !!supabase,
@@ -57,12 +57,21 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Gemini API endpoint
+// Protected route
+app.get('/api/protected-route', ClerkExpressRequireAuth(), (req, res) => {
+  const { auth } = req as RequireAuthProp<typeof req>;
+  if (!auth?.userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  res.json({ message: 'Access granted', userId: auth.userId });
+});
+
+// Gemini route
 app.post('/api/gemini', async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid request',
         details: 'Prompt must be a non-empty string'
       });
@@ -74,9 +83,9 @@ app.post('/api/gemini', async (req, res) => {
     const response = await result.response;
     const text = response.text();
 
-    return res.json({ 
+    return res.json({
       success: true,
-      result: text 
+      result: text
     });
   } catch (error: any) {
     console.error('Gemini API Error:', {
@@ -92,9 +101,4 @@ app.post('/api/gemini', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`🔑 Gemini Model: ${CURRENT_GEMINI_MODEL}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-});
+export default app;
