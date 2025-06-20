@@ -33,6 +33,11 @@ app.use(cors());
 app.use(express.json());
 app.use(ClerkExpressWithAuth({}));
 
+// ✅ Health check route
+app.get("/api/health", (_, res) => {
+  res.json({ status: "Backend is alive 🚀" });
+});
+
 // Authenticated test route
 app.get(
   "/api/protected-route",
@@ -75,7 +80,6 @@ app.post("/api/gemini", async (req, res) => {
 });
 
 export default app;
-
 
 // ✅ Backend verified locally 2025-06-20
 
